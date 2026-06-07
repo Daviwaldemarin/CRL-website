@@ -112,6 +112,7 @@ const PRODUTOS = [
   { brand: "VW", model: "Kombi Cliper 76/96 (pé de ferro)", codes: ["RK-301 LD S/C"], image: "KOMBI CLIPPER 79-96.jpg" },
   { brand: "VW", model: "Kombi Nova 97/... (pé de ferro)", codes: ["RK-600 LD S/C", "RK-601 LE S/C"], image: "KOMBI NOVA 97.jpg" },
   { brand: "VW", model: "Fox 2003/2010", codes: ["RF-280 LD S/C", "RF-281 LE S/C", "RF-282 LD C/C", "RF-283 LE C/C"], image: "FOX 2003-2010.jpg" },
+  { brand: "VW", model: "Fox 2010/2014 (lado esquerdo)", codes: [], novidade: true },
 
   // ===== LINHA FORD =====
   { brand: "Ford", model: "Pampa 84/91", codes: ["RK-304 LD S/C"], image: "PAMPA 84-91.jpg" },
@@ -125,6 +126,11 @@ const PRODUTOS = [
   { brand: "Ford", model: "Ford Fiesta 96/01 / Fiesta Street 03/05 (2/4 portas)", codes: ["RF-210 LD S/C", "RF-211 LE S/C", "RF-212 LD C/C", "RF-213 LE C/C"], image: "FORD FIESTA 96-01 FIESTA STREET 03 05.jpg" },
   { brand: "Ford", model: "Ford Fiesta 2002/2013 (2/4 portas)", codes: ["RF-230 LD S/C", "RF-231 LE S/C", "RF-232 LD C/C", "RF-233 LE C/C"], image: "IMG_9998.jpg" },
   { brand: "Ford", model: "Ford Ka 97/2007 (2/4 portas)", codes: ["RK-270 LD S/C", "RK-271 LE S/C", "RK-272 LD C/C", "RK-273 LE C/C"] },
+
+  // ===== LINHA RENAULT (lançamentos) =====
+  { brand: "Renault", model: "Sandero/Logan 2007/2009 (lado esquerdo)", codes: [], novidade: true },
+  { brand: "Renault", model: "Clio 1999/2010 (lado esquerdo)", codes: [], novidade: true },
+  { brand: "Renault", model: "Sandero/Logan 2009/2013 · Duster 2011/2015 (lado esquerdo)", codes: [], novidade: true },
 
   // ===== LINHA UNIVERSAL =====
   { brand: "Universal", model: "Renove Preto", codes: ["R-200 LD S/C"], image: "RENOVE PRETO.jpg" },
@@ -169,17 +175,21 @@ function renderProducts(filterBrand = "all", searchQuery = "") {
     const visual = p.image
       ? `<img class="product-photo" src="${encodeURI(PHOTOS_DIR + p.image)}" alt="${escapeHtml(p.model)}" loading="lazy" />`
       : mirrorSvg;
+    const badge = p.novidade ? `<span class="product-badge">Novidade</span>` : "";
+    const codes = (p.codes && p.codes.length)
+      ? p.codes.map(c => {
+          const isCC = c.includes("C/C");
+          return `<span class="code-tag${isCC ? " cc" : ""}">${escapeHtml(c)}</span>`;
+        }).join("")
+      : `<span class="code-tag code-soon">Códigos sob consulta</span>`;
     return `
-    <article class="product-card">
-      <div class="product-image">${visual}</div>
+    <article class="product-card${p.novidade ? " is-new" : ""}">
+      <div class="product-image">${badge}${visual}</div>
       <div class="product-info">
         <div class="product-brand">${p.brand}</div>
         <h3 class="product-name">${escapeHtml(p.model)}</h3>
         <div class="product-codes">
-          ${p.codes.map(c => {
-            const isCC = c.includes("C/C");
-            return `<span class="code-tag${isCC ? " cc" : ""}">${escapeHtml(c)}</span>`;
-          }).join("")}
+          ${codes}
         </div>
       </div>
     </article>
