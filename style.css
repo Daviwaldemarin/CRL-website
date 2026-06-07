@@ -491,6 +491,58 @@ p { margin: 0 0 1em; color: var(--steel-700); }
 .linha-card .count::after { content: "→"; color: var(--accent); transition: transform .2s; }
 .linha-card:hover .count::after { transform: translateX(4px); }
 
+/* ---- Card de lançamento (dourado, com feixe leve estilo "legendary") ---- */
+.linha-card--launch {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(233, 185, 73, 0.5);
+  background: linear-gradient(135deg, rgba(233, 185, 73, 0.16) 0%, rgba(233, 185, 73, 0.05) 100%);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(233, 185, 73, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+.linha-card--launch:hover {
+  border-color: rgba(233, 185, 73, 0.85);
+  background: linear-gradient(135deg, rgba(233, 185, 73, 0.22) 0%, rgba(233, 185, 73, 0.08) 100%);
+  box-shadow: 0 10px 36px rgba(233, 185, 73, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+.linha-card--launch .badge {
+  color: #f5cf6b;
+  font-weight: 700;
+  text-shadow: 0 0 12px rgba(233, 185, 73, 0.45);
+}
+.linha-card--launch h3 { color: #fbe3a3; }
+
+/* feixe dourado que cruza o card de tempos em tempos */
+.linha-card--launch::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 42%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(233, 185, 73, 0.18) 42%,
+    rgba(255, 240, 200, 0.55) 50%,
+    rgba(233, 185, 73, 0.18) 58%,
+    transparent 100%
+  );
+  transform: translateX(-160%) skewX(-18deg);
+  animation: launch-sheen 5.5s ease-in-out infinite;
+}
+
+@keyframes launch-sheen {
+  0%   { transform: translateX(-160%) skewX(-18deg); }
+  16%  { transform: translateX(320%) skewX(-18deg); }
+  100% { transform: translateX(320%) skewX(-18deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .linha-card--launch::before { animation: none; opacity: 0; }
+}
+
 /* =========================================================
    ABOUT SECTION (split image + text)
    ========================================================= */
