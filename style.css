@@ -952,3 +952,124 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   .js-anim .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
 }
+
+/* =========================================================
+   Honeypot anti-bot (campo invisível para humanos)
+   ========================================================= */
+.hp-field,
+.wa-hp {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* =========================================================
+   Modal de verificação do WhatsApp
+   ========================================================= */
+.wa-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 29, 63, 0.55);
+  backdrop-filter: blur(3px);
+  animation: wa-fade 0.18s ease;
+}
+.wa-modal-overlay[hidden] { display: none; }
+
+@keyframes wa-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.wa-modal {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 34px 30px 30px;
+  text-align: center;
+  box-shadow: 0 24px 60px rgba(15, 29, 63, 0.28);
+  animation: wa-pop 0.2s ease;
+}
+
+@keyframes wa-pop { from { transform: translateY(10px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
+
+.wa-modal-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #25d366;
+  color: #fff;
+  margin-bottom: 16px;
+}
+
+.wa-modal h3 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  color: var(--navy-900);
+}
+
+.wa-modal p {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: var(--steel-500);
+}
+
+.wa-question {
+  display: block;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--navy-900);
+  margin-bottom: 12px;
+}
+
+.wa-answer {
+  width: 100%;
+  padding: 13px 16px;
+  font-size: 16px;
+  font-family: var(--font-sans);
+  text-align: center;
+  border: 1.5px solid var(--steel-300);
+  border-radius: var(--radius-md);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+.wa-answer:focus { border-color: var(--navy-600); }
+
+.wa-error {
+  margin: 12px 0 0 !important;
+  color: #c0392b !important;
+  font-size: 13px !important;
+  font-weight: 500;
+}
+
+.wa-submit {
+  width: 100%;
+  margin-top: 18px;
+  justify-content: center;
+}
+
+.wa-modal-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: transparent;
+  color: var(--steel-400);
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.wa-modal-close:hover { background: var(--steel-100); color: var(--navy-900); }

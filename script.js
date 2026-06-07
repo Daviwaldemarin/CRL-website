@@ -328,21 +328,130 @@ function initDotGrid(svg) {
 
 document.querySelectorAll(".hero-bg svg").forEach(svg => initDotGrid(svg));
 
-/* ---------- Contact form (front-end only — replace with backend integration) ---------- */
+/* =========================================================
+   WHATSAPP — número protegido + verificação anti-bot
+   O número NÃO fica no HTML (evita raspagem por robôs). Ele é
+   montado em partes aqui e só usado após uma verificação humana
+   (desafio aritmético + honeypot) disparada por clique.
+   ========================================================= */
 (() => {
-  const form = document.getElementById("contact-form");
-  if (!form) return;
-  form.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(form).entries());
-    // Compose WhatsApp message (15 3461-1074 for primary)
-    const msg = `Olá! Vim pelo site CRL.\n\nNome: ${data.nome}\nEmpresa: ${data.empresa || "-"}\nE-mail: ${data.email}\nTelefone: ${data.telefone || "-"}\nAssunto: ${data.assunto}\n\n${data.mensagem}`;
-    const url = `https://wa.me/551534611074?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank", "noopener");
-    const note = document.querySelector(".form-note");
-    if (note) {
-      note.textContent = "Abrindo o WhatsApp com sua mensagem…";
-      note.style.color = "var(--navy-700)";
+  // Montado em partes de propósito — dificulta scraping do número cru.
+  const WA_NUMBER = ["55", "11", "94764", "5720"].join("");
+  const DEFAULT_MSG = "Olá! Vim pelo site da CRL Retrovisores.";
+
+  function buildUrl(message) {
+    const text = encodeURIComponent(message || DEFAULT_MSG);
+    return `https://wa.me/${WA_NUMBER}?text=${text}`;
+  }
+
+  // ---- Modal de verificação (criado uma vez, sob demanda) ----
+  let modal, answerInput, hpInput, errorEl, questionEl, submitBtn;
+  let expected = 0;
+  let pendingMessage = null;
+  let openedAt = 0;
+
+  function newChallenge() {
+    const a = 1 + Math.floor(Math.random() * 8);
+    const b = 1 + Math.floor(Math.random() * 8);
+    expected = a + b;
+    questionEl.textContent = `Quanto é ${a} + ${b}?`;
+    answerInput.value = "";
+    hpInput.value = "";
+    errorEl.hidden = true;
+    openedAt = Date.now();
+  }
+
+  function buildModal() {
+    modal = document.createElement("div");
+    modal.className = "wa-modal-overlay";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-labelledby", "wa-modal-title");
+    modal.hidden = true;
+    modal.innerHTML = `
+      <div class="wa-modal">
+        <button type="button" class="wa-modal-close" aria-label="Fechar">&times;</button>
+        <div class="wa-modal-badge">
+          <svg viewBox="0 0 32 32" fill="currentColor" width="26" height="26"><path d="M16.003 2.667C8.643 2.667 2.667 8.643 2.667 16.003c0 2.349.61 4.557 1.683 6.471L2.667 29.333l7.05-1.65a13.27 13.27 0 0 0 6.286 1.601h.005c7.36 0 13.336-5.976 13.336-13.336 0-3.563-1.388-6.91-3.91-9.43-2.522-2.522-5.871-3.85-9.431-3.85zm6.084 16.085c-.333-.167-1.97-.973-2.276-1.084-.305-.111-.527-.167-.749.167-.222.333-.86 1.084-1.054 1.306-.194.222-.388.25-.721.083-.333-.167-1.407-.518-2.681-1.654-.991-.884-1.66-1.976-1.854-2.309-.194-.333-.02-.514.146-.681.15-.149.333-.388.5-.583.166-.194.222-.333.333-.555.111-.222.055-.417-.028-.583-.083-.166-.749-1.806-1.026-2.474-.27-.65-.545-.561-.749-.572-.194-.01-.416-.012-.638-.012a1.224 1.224 0 0 0-.888.417c-.305.333-1.165 1.139-1.165 2.778 0 1.638 1.193 3.222 1.359 3.444.166.222 2.347 3.585 5.689 5.026.795.343 1.416.548 1.9.701.798.254 1.524.218 2.099.132.64-.096 1.97-.806 2.247-1.583.277-.778.277-1.444.194-1.583-.083-.139-.305-.222-.638-.389z"/></svg>
+        </div>
+        <h3 id="wa-modal-title">Verificação rápida</h3>
+        <p>Confirme que você não é um robô para abrir o WhatsApp.</p>
+        <label class="wa-question" for="wa-answer"></label>
+        <input id="wa-answer" class="wa-answer" type="text" inputmode="numeric" autocomplete="off" />
+        <input class="wa-hp" type="text" tabindex="-1" autocomplete="off" aria-hidden="true" />
+        <p class="wa-error" hidden>Resposta incorreta. Tente novamente.</p>
+        <button type="button" class="btn wa-submit">Abrir WhatsApp</button>
+      </div>`;
+    document.body.appendChild(modal);
+
+    questionEl = modal.querySelector(".wa-question");
+    answerInput = modal.querySelector(".wa-answer");
+    hpInput = modal.querySelector(".wa-hp");
+    errorEl = modal.querySelector(".wa-error");
+    submitBtn = modal.querySelector(".wa-submit");
+
+    modal.querySelector(".wa-modal-close").addEventListener("click", closeModal);
+    modal.addEventListener("click", (e) => { if (e.target === modal) closeModal(); });
+    submitBtn.addEventListener("click", verify);
+    answerInput.addEventListener("keydown", (e) => { if (e.key === "Enter") verify(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !modal.hidden) closeModal(); });
+  }
+
+  function openModal(message) {
+    if (!modal) buildModal();
+    pendingMessage = message || DEFAULT_MSG;
+    newChallenge();
+    modal.hidden = false;
+    document.body.style.overflow = "hidden";
+    setTimeout(() => answerInput.focus(), 50);
+  }
+
+  function closeModal() {
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.style.overflow = "";
+  }
+
+  function verify() {
+    // honeypot preenchido OU resposta instantânea (<800ms) => provável robô
+    const tooFast = Date.now() - openedAt < 800;
+    if (hpInput.value.trim() !== "" || tooFast) { closeModal(); return; }
+
+    if (parseInt(answerInput.value, 10) === expected) {
+      const url = buildUrl(pendingMessage);
+      closeModal();
+      window.open(url, "_blank", "noopener");
+    } else {
+      errorEl.hidden = false;
+      newChallenge();
+      answerInput.focus();
     }
+  }
+
+  // ---- Liga todos os gatilhos [data-whatsapp] ao modal ----
+  document.querySelectorAll("[data-whatsapp]").forEach((el) => {
+    el.addEventListener("click", (e) => {
+      e.preventDefault();
+      openModal(el.getAttribute("data-whatsapp-msg") || DEFAULT_MSG);
+    });
   });
+
+  // ---- Formulário de contato (front-end; trocar por back-end no futuro) ----
+  const form = document.getElementById("contact-form");
+  if (form) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      // honeypot: campo "website" deve ficar vazio para humanos
+      if ((data.website || "").trim() !== "") return;
+
+      const msg = `Olá! Vim pelo site CRL.\n\nNome: ${data.nome}\nEmpresa: ${data.empresa || "-"}\nE-mail: ${data.email}\nTelefone: ${data.telefone || "-"}\nAssunto: ${data.assunto}\n\n${data.mensagem}`;
+      openModal(msg);
+      const note = document.querySelector(".form-note");
+      if (note) {
+        note.textContent = "Verifique que você não é um robô para abrir o WhatsApp…";
+        note.style.color = "var(--navy-700)";
+      }
+    });
+  }
 })();
